@@ -128,42 +128,40 @@
             <a-light type="ambient"     color="#fff" intensity="2.5"></a-light>
             <a-light type="directional" color="#fff" intensity="1"   position="1 2 1"></a-light>
 
-            <!-- Elephant mascot group -->
-            <a-entity id="elephant-mascot" position="0 0 0">
+            <!-- Elephant mascot — big and obvious -->
+            <a-entity id="elephant-mascot" position="0 0 0.02">
 
-                <!-- Fallback: 3-part primitive elephant -->
+                <!-- Emoji label (always visible backup) -->
+                <a-text id="elephant-emoji" value="🐘" align="center"
+                        color="#DC2626" width="4"
+                        position="0 0.38 0.01" scale="2.5 2.5 2.5"></a-text>
+
+                <!-- Primitive elephant body (shown until GLB loads) -->
                 <a-entity id="elephant-fallback">
                     <!-- body -->
-                    <a-sphere color="#DC2626" radius="0.1"  position="0    0.12 0"></a-sphere>
+                    <a-sphere color="#DC2626" radius="0.16" position="0 0.18 0"></a-sphere>
                     <!-- head -->
-                    <a-sphere color="#EF4444" radius="0.07" position="0.1  0.21 0"></a-sphere>
-                    <!-- trunk (tilted cylinder) -->
-                    <a-cylinder color="#B91C1C" radius="0.022" height="0.11"
-                                position="0.17 0.16 0" rotation="0 0 -30"></a-cylinder>
-                    <!-- ear -->
-                    <a-circle color="#FECACA" radius="0.05" position="-0.04 0.22 0.01"></a-circle>
-                    <!-- tail -->
-                    <a-cylinder color="#B91C1C" radius="0.015" height="0.09"
-                                position="-0.1 0.12 0" rotation="0 0 30"></a-cylinder>
+                    <a-sphere color="#EF4444" radius="0.11" position="0.14 0.32 0"></a-sphere>
+                    <!-- trunk -->
+                    <a-cylinder color="#B91C1C" radius="0.035" height="0.14"
+                                position="0.22 0.26 0" rotation="0 0 -28"></a-cylinder>
+                    <!-- ears -->
+                    <a-circle color="#FECACA" radius="0.07" position="-0.06 0.34 0.01"></a-circle>
+                    <a-circle color="#FECACA" radius="0.06" position="0.08 0.38 0.01" rotation="0 0 20"></a-circle>
+                    <!-- legs -->
+                    <a-cylinder color="#991B1B" radius="0.04" height="0.12" position="-0.08 0.08 0"></a-cylinder>
+                    <a-cylinder color="#991B1B" radius="0.04" height="0.12" position="0.08 0.08 0"></a-cylinder>
                 </a-entity>
 
-                <!-- GLB model (loaded after arReady) -->
+                <!-- GLB 3D model (loaded after arReady via blob URL) -->
                 <a-gltf-model id="elephant-model" visible="false"
-                              position="0 0.1 0" scale="0.14 0.14 0.14"></a-gltf-model>
+                              position="0 0.15 0" scale="0.22 0.22 0.22"></a-gltf-model>
 
-                <!-- Small gold ring on ground plane -->
+                <!-- gold ring on ground -->
                 <a-ring color="#FBBF24"
-                        radius-inner="0.13" radius-outer="0.17"
+                        radius-inner="0.18" radius-outer="0.22"
                         position="0 0.005 0" rotation="-90 0 0"></a-ring>
             </a-entity>
-
-            <!-- 3 lucky collect items — small coloured spheres -->
-            <a-sphere class="lucky-item" color="#DC2626" radius="0.045"
-                      position="-0.28 0.07 0.04"></a-sphere>
-            <a-sphere class="lucky-item" color="#FBBF24" radius="0.04"
-                      position=" 0.28 0.06 0.04"></a-sphere>
-            <a-sphere class="lucky-item" color="#EF4444" radius="0.04"
-                      position=" 0    0.27 0.04"></a-sphere>
         </a-entity>
     </a-scene>
 </template>

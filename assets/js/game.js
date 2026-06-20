@@ -113,14 +113,42 @@
     function getFallback() { return document.getElementById('elephant-fallback'); }
 
     function showFallback() {
-        const m = getModel(), f = getFallback();
+        const m = getModel(), f = getFallback(), emoji = document.getElementById('elephant-emoji');
         if (m) m.setAttribute('visible', 'false');
         if (f) f.setAttribute('visible', 'true');
+        if (emoji) emoji.setAttribute('visible', 'true');
     }
+
     function showGltf() {
-        const m = getModel(), f = getFallback();
+        const mesh = getModel()?.getObject3D('mesh');
+        // Only swap to GLB if it actually has geometry
+        if (!mesh || mesh.children.length === 0) {
+            showFallback();
+            return;
+        }
+        const f = getFallback(), emoji = document.getElementById('elephant-emoji');
         if (f) f.setAttribute('visible', 'false');
+        if (emoji) emoji.setAttribute('visible', 'false');
+        const m = getModel();
         if (m) m.setAttribute('visible', 'true');
+    }
+
+    async function loadElephantModel() {
+        const model = getModel();
+        if (!model) return;
+
+        showFallback(); // always show primitive first
+
+        try {
+            const url = config.elephantModel || '/assets/models/red_elephant_mascot_3d.glb';
+            const res = await fetch(url, { cache: 'force-cache' });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const buf = await res.arrayBuffer();
+            const blobUrl = URL.createObjectURL(new Blob([buf], { type: 'model/gltf-binary' }));
+            model.setAttribute('src', blobUrl);
+        } catch (_) {
+            /* keep primitive elephant */
+        }
     }
 
     function setupModelListeners() {
@@ -129,8 +157,12 @@
         model.dataset.listenersSet = '1';
 
         model.addEventListener('model-loaded', () => {
-            // Try bounding-box auto-fit, fall back to known-good fixed scale
-            let fitted = false;
+            // Fixed scale — auto-fit often produces invisible results on mobile
+            model.setAttribute('scale', '0.22 0.22 0.22');
+            model.setAttribute('position', '0 0.18 0.02');
+            model.setAttribute('rotation', '0 0 0');
+
+            // Try centering via bounding box, but clamp scale
             try {
                 const mesh = model.getObject3D('mesh');
                 if (mesh && typeof THREE !== 'undefined') {
@@ -140,22 +172,17 @@
                         const size   = box.getSize(new THREE.Vector3());
                         const center = box.getCenter(new THREE.Vector3());
                         const maxDim = Math.max(size.x, size.y, size.z, 0.001);
-                        const s      = 0.28 / maxDim;
+                        let s = 0.35 / maxDim;
+                        s = Math.max(0.08, Math.min(s, 0.5)); // clamp
                         model.setAttribute('scale', `${s} ${s} ${s}`);
                         model.setAttribute('position', {
                             x: -center.x * s,
-                            y: -center.y * s + 0.15,
-                            z: -center.z * s,
+                            y: -center.y * s + 0.2,
+                            z: -center.z * s + 0.02,
                         });
-                        fitted = true;
                     }
                 }
-            } catch (_) { /* ignore */ }
-
-            if (!fitted) {
-                model.setAttribute('scale', '0.14 0.14 0.14');
-                model.setAttribute('position', '0 0.08 0');
-            }
+            } catch (_) { /* use fixed scale above */ }
 
             showGltf();
             modelLoaded = true;
@@ -177,6 +204,7 @@
         if (!sceneEl) return null;
 
         setupModelListeners();
+        showFallback();
         return sceneEl;
     }
 
@@ -187,11 +215,7 @@
 
         sceneEl.addEventListener('arReady', () => {
             hideLoading();
-            // Begin loading GLB model now (user already sees fallback)
-            const model = getModel();
-            if (model) {
-                model.setAttribute('src', config.elephantModel || '/assets/models/red_elephant_mascot_3d.glb');
-            }
+            loadElephantModel();
         });
 
         sceneEl.addEventListener('arError', () => showError(msg.cameraDenied));
@@ -204,6 +228,7 @@
             targetEntity.addEventListener('targetFound', () => {
                 targetVisible = true;
                 if (scanStatus) scanStatus.textContent = msg.targetFound || 'พบช้างแล้ว! — แตะช้าง';
+                showFallback(); // ensure elephant is visible when target found
                 showTapOverlay();
             });
 

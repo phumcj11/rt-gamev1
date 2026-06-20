@@ -110,20 +110,22 @@ renderGameHead($t['game_title'], $t);
         <a-light type="ambient" color="#ffffff" intensity="2"></a-light>
         <a-light type="directional" color="#ffffff" intensity="1" position="0 2 2"></a-light>
 
-        <a-entity id="elephant-mascot" position="0 0 0">
+        <a-entity id="elephant-mascot" position="0 0 0.02">
+            <a-text id="elephant-emoji" value="🐘" align="center"
+                    color="#DC2626" width="4"
+                    position="0 0.38 0.01" scale="2.5 2.5 2.5"></a-text>
             <a-entity id="elephant-fallback">
-                <a-sphere color="#DC2626" radius="0.22" position="0 0.3 0"></a-sphere>
-                <a-sphere color="#EF4444" radius="0.15" position="0.16 0.5 0"></a-sphere>
-                <a-cylinder color="#B91C1C" radius="0.05" height="0.26" position="0.3 0.4 0" rotation="0 0 -25"></a-cylinder>
-                <a-circle color="#FECACA" radius="0.1" position="-0.08 0.54 0.01" rotation="0 0 0"></a-circle>
+                <a-sphere color="#DC2626" radius="0.16" position="0 0.18 0"></a-sphere>
+                <a-sphere color="#EF4444" radius="0.11" position="0.14 0.32 0"></a-sphere>
+                <a-cylinder color="#B91C1C" radius="0.035" height="0.14" position="0.22 0.26 0" rotation="0 0 -28"></a-cylinder>
+                <a-circle color="#FECACA" radius="0.07" position="-0.06 0.34 0.01"></a-circle>
+                <a-circle color="#FECACA" radius="0.06" position="0.08 0.38 0.01" rotation="0 0 20"></a-circle>
+                <a-cylinder color="#991B1B" radius="0.04" height="0.12" position="-0.08 0.08 0"></a-cylinder>
+                <a-cylinder color="#991B1B" radius="0.04" height="0.12" position="0.08 0.08 0"></a-cylinder>
             </a-entity>
-            <a-gltf-model id="elephant-model" visible="false" position="0 0.28 0" scale="0.14 0.14 0.14"></a-gltf-model>
-            <a-ring color="#FBBF24" radius-inner="0.35" radius-outer="0.42" position="0 0.01 0" rotation="-90 0 0"></a-ring>
+            <a-gltf-model id="elephant-model" visible="false" position="0 0.15 0" scale="0.22 0.22 0.22"></a-gltf-model>
+            <a-ring color="#FBBF24" radius-inner="0.18" radius-outer="0.22" position="0 0.005 0" rotation="-90 0 0"></a-ring>
         </a-entity>
-
-        <a-sphere id="lucky-item-1" class="lucky-item" color="#DC2626" radius="0.06" position="-0.38 0.12 0.05"></a-sphere>
-        <a-sphere id="lucky-item-2" class="lucky-item" color="#FBBF24" radius="0.05" position="0.38 0.1 0.05"></a-sphere>
-        <a-sphere id="lucky-item-3" class="lucky-item" color="#DC2626" radius="0.05" position="0 0.18 0.05"></a-sphere>
     </a-entity>
 </a-scene>
 </template>
