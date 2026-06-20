@@ -26,7 +26,10 @@
     const scanStatus = document.getElementById('scan-status');
     const toast = document.getElementById('toast');
     const itemDots = document.querySelectorAll('.item-dot');
-    let sceneEl = document.getElementById('ar-scene');
+    let sceneEl = null;
+
+    const arContainer = document.getElementById('ar-container');
+    const sceneTemplate = document.getElementById('ar-scene-template');
 
     function showToast(message, duration = 2200) {
         toast.textContent = message;
@@ -241,23 +244,73 @@
         }
     }
 
-    function activateMindAR() {
-        if (!sceneEl || sceneEl.hasAttribute('mindar-image')) return;
-        const target = config.mindTarget || 'https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.mind';
-        sceneEl.setAttribute(
-            'mindar-image',
-            `imageTargetSrc: ${target}; maxTrack: 1; uiLoading: no; uiScanning: no; uiError: no;`
-        );
+    function mountArScene() {
+        if (sceneEl?.dataset.mounted) return sceneEl;
+        if (!sceneTemplate || !arContainer) return null;
+
+        arContainer.style.display = 'block';
+        arContainer.style.visibility = 'visible';
+
+        const clone = sceneTemplate.content.cloneNode(true);
+        arContainer.appendChild(clone);
+        sceneEl = document.getElementById('ar-scene');
+        if (!sceneEl) return null;
+
+        sceneEl.dataset.mounted = '1';
+        setupElephantModel();
+        showFallbackElephant();
+
+        requestAnimationFrame(() => {
+            refreshSceneLayout();
+            setTimeout(refreshSceneLayout, 200);
+            setTimeout(refreshSceneLayout, 1000);
+        });
+
+        return sceneEl;
     }
 
     function showArScene() {
-        if (!sceneEl) return;
-        sceneEl.classList.remove('ar-scene-hidden');
-        setupElephantModel();
-        showFallbackElephant();
-        requestAnimationFrame(() => {
-            refreshSceneLayout();
-            setTimeout(refreshSceneLayout, 100);
+        refreshSceneLayout();
+    }
+
+    function hasLiveCameraFeed() {
+        const video = sceneEl?.querySelector('video');
+        return !!(video && video.readyState >= 2 && video.videoWidth > 0);
+    }
+
+    function waitForArStart(timeoutMs = 20000) {
+        return new Promise((resolve, reject) => {
+            if (!sceneEl) {
+                reject(new Error('NO_SCENE'));
+                return;
+            }
+
+            if (hasLiveCameraFeed()) {
+                resolve();
+                return;
+            }
+
+            let settled = false;
+            const finish = (ok) => {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timer);
+                sceneEl.removeEventListener('arReady', onReady);
+                sceneEl.removeEventListener('renderstart', onReady);
+                sceneEl.removeEventListener('arError', onError);
+                ok ? resolve() : reject(new Error('AR_START_FAILED'));
+            };
+
+            const onReady = () => finish(true);
+            const onError = () => finish(false);
+
+            sceneEl.addEventListener('arReady', onReady, { once: true });
+            sceneEl.addEventListener('renderstart', onReady, { once: true });
+            sceneEl.addEventListener('arError', onError, { once: true });
+
+            const timer = setTimeout(() => {
+                finish(hasLiveCameraFeed());
+            }, timeoutMs);
         });
     }
 
@@ -267,7 +320,6 @@
 
         sceneEl.addEventListener('arReady', () => {
             hideLoading();
-            stopPreviewStream();
             optimizeRenderer();
             refreshSceneLayout();
             loadGltfInBackground();
@@ -317,28 +369,25 @@
 
         arStarted = true;
         startScreen?.classList.add('hidden');
-        showLoading(msg.requestingCamera || 'Requesting camera...');
+        showLoading(msg.loadingAr || 'Loading AR...');
 
         try {
-            await requestCameraPermission();
-            showLoading(msg.loadingAr || 'Loading AR...');
-            activateMindAR();
-            showArScene();
-            bindArEvents();
+            mountArScene();
+            if (!sceneEl) throw new Error('NO_SCENE');
 
-            setTimeout(hideLoading, 8000);
+            bindArEvents();
+            showArScene();
+            await waitForArStart();
+            hideLoading();
+            optimizeRenderer();
+            refreshSceneLayout();
         } catch (err) {
             console.error('AR start error:', err);
-            stopPreviewStream();
             arStarted = false;
 
             let message = msg.cameraDenied;
-            if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-                message = msg.cameraDenied;
-            } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-                message = msg.cameraNoDevice || msg.cameraDenied;
-            } else if (err.message === 'NO_API') {
-                message = msg.cameraHttpsRequired;
+            if (err.message === 'NO_SCENE' || err.message === 'AR_START_FAILED') {
+                message = msg.cameraDenied || 'Cannot start AR camera';
             }
 
             showCameraError(message, getHelpSteps());
@@ -350,8 +399,6 @@
     }
 
     retryBtn?.addEventListener('click', () => {
-        cameraError?.classList.add('hidden');
-        startScreen?.classList.remove('hidden');
-        if (!config.needsHttps) startAr();
+        window.location.reload();
     });
 })();

@@ -91,11 +91,14 @@ renderGameHead($t['game_title'], $t);
     </div>
 </div>
 
+<div id="ar-container" style="display:none;position:fixed;inset:0;z-index:1;"></div>
+
+<template id="ar-scene-template">
 <a-scene
     id="ar-scene"
-    class="ar-scene-hidden"
+    mindar-image="imageTargetSrc: <?= e($mindTarget) ?>; maxTrack: 1; uiLoading: no; uiScanning: no; uiError: no;"
     color-space="sRGB"
-    renderer="colorManagement: false, alpha: false, antialias: false, precision: mediump, logarithmicDepthBuffer: false"
+    renderer="alpha: true, antialias: false, precision: mediump, colorManagement: false, logarithmicDepthBuffer: false"
     vr-mode-ui="enabled: false"
     device-orientation-permission-ui="enabled: false"
 >
@@ -137,6 +140,7 @@ renderGameHead($t['game_title'], $t);
         </a-entity>
     </a-entity>
 </a-scene>
+</template>
 
 <script>
 window.GAME_CONFIG = {
