@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>โหมดง่าย | AR Lucky Elephant Hunt</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/assets/css/app.css">
+</head>
+<body class="bg-white min-h-screen flex flex-col">
+    <header class="bg-red-600 text-white px-4 py-3 text-center font-bold text-sm">🐘 โหมดง่าย — ไม่ต้องใช้กล้อง</header>
+
+    <section class="max-w-lg mx-auto px-4 py-6 flex-1 w-full flex flex-col">
+        <div class="flex justify-between items-center mb-4">
+            <span class="text-sm font-medium text-red-600">ไอเทมนำโชค</span>
+            <span id="count" class="font-bold text-red-600">0/3</span>
+        </div>
+
+        <button id="stage" type="button" class="flex-1 min-h-[320px] bg-gradient-to-b from-red-50 to-white border-2 border-red-200 rounded-3xl flex flex-col items-center justify-center active:scale-[0.98] transition-transform">
+            <div class="text-[100px] leading-none animate-bounce">🐘</div>
+            <p id="hint" class="mt-4 text-red-600 font-bold">แตะช้าง!</p>
+            <div id="dots" class="flex gap-3 mt-4">
+                <span class="w-10 h-10 rounded-full border-2 border-red-600 flex items-center justify-center text-sm">1</span>
+                <span class="w-10 h-10 rounded-full border-2 border-red-600 flex items-center justify-center text-sm">2</span>
+                <span class="w-10 h-10 rounded-full border-2 border-red-600 flex items-center justify-center text-sm">3</span>
+            </div>
+        </button>
+
+        <div id="done" class="hidden text-center mt-6">
+            <div class="text-5xl mb-2">🎉</div>
+            <a href="/reward.html" class="btn-primary mx-auto inline-flex no-underline">รับรางวัล</a>
+        </div>
+
+        <a href="/index.html" class="text-center text-sm text-gray-500 mt-4 underline">กลับหน้าแรก</a>
+    </section>
+
+    <script>
+    (function () {
+        let count = 0, busy = false;
+        const stage = document.getElementById('stage');
+        const countEl = document.getElementById('count');
+        const hint = document.getElementById('hint');
+        const done = document.getElementById('done');
+        const dots = document.querySelectorAll('#dots span');
+
+        stage.addEventListener('click', async () => {
+            if (busy || count >= 3) return;
+            busy = true;
+            try {
+                const res = await fetch('/api/collect-item', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ item_id: 'demo_' + count }),
+                });
+                const data = await res.json();
+                if (data.added) {
+                    count = data.count;
+                    countEl.textContent = count + '/3';
+                    dots[count - 1].className = 'w-10 h-10 rounded-full bg-red-600 text-white flex items-center justify-center text-sm';
+                    dots[count - 1].textContent = '🍀';
+                    if (data.complete) {
+                        stage.classList.add('hidden');
+                        done.classList.remove('hidden');
+                    } else {
+                        hint.textContent = 'แตะอีก! (' + count + '/3)';
+                    }
+                }
+            } catch (e) {
+                hint.textContent = 'Error — refresh page';
+            }
+            busy = false;
+        });
+    })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>รับรางวัล | AR Lucky Elephant Hunt</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/assets/css/app.css">
+</head>
+<body class="bg-white min-h-screen">
+    <header class="bg-red-600 text-white px-4 py-3 text-center font-bold text-sm">🐘 รับรางวัล</header>
+
+    <section class="max-w-lg mx-auto px-4 py-8" id="app">
+        <div id="success-view" class="hidden text-center">
+            <div class="text-5xl mb-3">🎊</div>
+            <p class="text-sm text-gray-600 mb-1">คุณได้รับ</p>
+            <p id="reward-label" class="text-xl font-bold text-red-600 mb-4"></p>
+            <p class="text-sm text-gray-600 mb-2">รหัสคูปอง</p>
+            <div id="coupon-code" class="coupon-code mx-auto mb-4"></div>
+            <p class="text-xs text-gray-500">แสดงรหัสนี้ให้พนักงาน</p>
+            <a href="/index.html" class="btn-secondary mt-6 inline-flex no-underline">กลับหน้าแรก</a>
+        </div>
+
+        <div id="form-view">
+            <div class="text-center mb-6">
+                <div class="text-5xl mb-2">🐘</div>
+                <h1 class="text-xl font-bold text-red-600">กรอกข้อมูลรับคูปอง</h1>
+            </div>
+            <form id="reward-form" class="space-y-4">
+                <input type="text" name="name" required placeholder="ชื่อ-นามสกุล" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3">
+                <input type="tel" name="phone" required placeholder="เบอร์โทร" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3">
+                <select name="branch" required class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white">
+                    <option value="">เลือกสาขา</option>
+                    <option value="siam_paragon">Siam Paragon</option>
+                    <option value="central_world">Central World</option>
+                    <option value="iconsiam">ICONSIAM</option>
+                    <option value="phuket">Phuket</option>
+                    <option value="chiang_mai">Chiang Mai</option>
+                </select>
+                <input type="text" name="nationality" required placeholder="สัญชาติ" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3">
+                <div id="form-error" class="hidden text-red-600 text-sm text-center"></div>
+                <button type="submit" class="btn-primary">รับคูปองของฉัน</button>
+            </form>
+            <p class="text-xs text-gray-400 text-center mt-4">ยังไม่ได้เล่นเกม? <a href="/demo.html" class="text-red-600 underline">เล่นโหมดง่าย</a></p>
+        </div>
+    </section>
+
+    <script>
+    (function () {
+        const params = new URLSearchParams(location.search);
+        if (params.get('saved') === '1') {
+            document.getElementById('form-view').classList.add('hidden');
+            document.getElementById('success-view').classList.remove('hidden');
+            document.getElementById('coupon-code').textContent = params.get('code') || '';
+            document.getElementById('reward-label').textContent = params.get('reward') || '';
+            return;
+        }
+
+        document.getElementById('reward-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const err = document.getElementById('form-error');
+            const btn = form.querySelector('button');
+            btn.disabled = true;
+            const data = Object.fromEntries(new FormData(form));
+            data.lang = 'th';
+
+            try {
+                const res = await fetch('/api/save-player', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(data),
+                });
+                const json = await res.json();
+                if (json.success) {
+                    location.href = json.redirect;
+                } else {
+                    err.textContent = json.message || 'Error';
+                    err.classList.remove('hidden');
+                    btn.disabled = false;
+                }
+            } catch (ex) {
+                err.textContent = 'Connection error';
+                err.classList.remove('hidden');
+                btn.disabled = false;
+            }
+        });
+    })();
+    </script>
+</body>
+</html>

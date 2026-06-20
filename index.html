@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#DC2626">
+    <title>AR Lucky Elephant Hunt</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/assets/css/app.css">
+</head>
+<body class="bg-white text-gray-900 min-h-screen flex flex-col">
+    <header class="bg-red-600 text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
+            <span class="font-bold text-sm">🐘 AR Lucky Elephant Hunt</span>
+            <a href="?lang=en" class="text-xs bg-white/20 px-3 py-1 rounded-full">English</a>
+        </div>
+    </header>
+
+    <section class="hero-pattern text-white px-4 py-10 text-center">
+        <div class="max-w-lg mx-auto">
+            <div class="text-6xl mb-4">🐘</div>
+            <h1 class="text-2xl font-bold mb-2">AR เกมช้างนำโชค</h1>
+            <p class="text-lg text-red-100 mb-2">สแกน · เก็บ · รับรางวัล!</p>
+        </div>
+    </section>
+
+    <section class="max-w-lg mx-auto px-4 py-8 flex-1 w-full">
+        <div class="text-center mb-6 space-y-3">
+            <a href="/demo.html" class="btn-primary mx-auto bg-green-600 block max-w-xs text-center no-underline">
+                🐘 เล่นเลย (โหมดง่าย)
+            </a>
+            <p class="text-xs text-gray-500">ไม่ต้องใช้กล้อง — แตะช้าง 3 ครั้ง</p>
+        </div>
+        <div class="text-center mb-6">
+            <a href="/game.html" class="btn-secondary mx-auto block max-w-xs text-center no-underline">
+                📷 เกม AR จริง
+            </a>
+            <p class="text-xs text-gray-500 mt-2">ใช้ HTTPS บน Vercel — กล้องมือถือใช้ได้</p>
+        </div>
+        <div class="bg-red-50 rounded-2xl p-4 text-center">
+            <p class="text-sm font-medium text-red-700 mb-2">Demo AR Target</p>
+            <img src="/assets/targets/demo-scan-target.png" alt="target" class="mx-auto max-w-[180px] rounded shadow">
+        </div>
+    </section>
+
+    <footer class="bg-red-100 text-red-800 text-center text-xs py-4">© AR Lucky Elephant Hunt</footer>
+</body>
+</html>

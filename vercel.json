@@ -1,0 +1,29 @@
+{
+  "version": 2,
+  "buildCommand": "",
+  "outputDirectory": ".",
+  "framework": null,
+  "rewrites": [
+    { "source": "/", "destination": "/index.html" },
+    { "source": "/demo", "destination": "/demo.html" },
+    { "source": "/game", "destination": "/game.html" },
+    { "source": "/reward", "destination": "/reward.html" }
+  ],
+  "headers": [
+    {
+      "source": "/assets/models/(.*)",
+      "headers": [
+        { "key": "Content-Type", "value": "model/gltf-binary" },
+        { "key": "Content-Disposition", "value": "inline" },
+        { "key": "Cache-Control", "value": "public, max-age=86400" }
+      ]
+    },
+    {
+      "source": "/assets/models/model.php",
+      "headers": [
+        { "key": "Content-Type", "value": "model/gltf-binary" },
+        { "key": "Content-Disposition", "value": "inline" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+AddType model/gltf-binary .glb
+AddType model/gltf+json .gltf
+
+<IfModule mod_headers.c>
+    Header set Content-Disposition "inline"
+    Header set Access-Control-Allow-Origin "*"
+</IfModule>

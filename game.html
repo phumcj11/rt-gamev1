@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#DC2626">
+    <title>AR Game | Lucky Elephant Hunt</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/assets/css/app.css">
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+</head>
+<body class="game-page bg-black overflow-hidden">
+    <header class="game-header bg-red-600 text-white shadow-md">
+        <div class="max-w-lg mx-auto px-4 py-3 flex justify-between items-center">
+            <a href="/index.html" class="text-sm font-bold">🐘 AR Lucky Elephant Hunt</a>
+            <a href="/demo.html" class="text-xs bg-white/20 px-3 py-1 rounded-full">โหมดง่าย</a>
+        </div>
+    </header>
+
+    <div id="start-screen" class="fixed inset-0 z-50 bg-red-600 flex flex-col items-center justify-center text-white p-6 text-center">
+        <div class="text-6xl mb-4">📷</div>
+        <h2 class="text-xl font-bold mb-2">เริ่มเกม AR</h2>
+        <p class="text-sm text-red-100 mb-6">กดปุ่มด้านล่าง แล้วเลือก Allow เมื่อเบราว์เซอร์ถาม</p>
+        <button id="start-ar-btn" type="button" class="btn-primary max-w-xs">อนุญาตใช้กล้อง</button>
+    </div>
+
+    <div id="loading-screen" class="hidden fixed inset-0 z-40 bg-red-600 flex flex-col items-center justify-center text-white p-6">
+        <div class="text-5xl mb-4 animate-pulse">🐘</div>
+        <p id="loading-text" class="text-lg">กำลังเปิด AR...</p>
+    </div>
+
+    <div id="camera-error" class="hidden fixed inset-0 z-40 bg-gray-900 flex flex-col items-center justify-center text-white p-6 text-center">
+        <p class="mb-4">ต้องอนุญatกล้อง — ไปที่ Settings แล้ว Allow Camera</p>
+        <a href="/demo.html" class="btn-primary max-w-xs mb-3 no-underline">เล่นโหมดง่ายแทน</a>
+    </div>
+
+    <div class="game-hud px-4">
+        <div class="max-w-lg mx-auto bg-black/60 rounded-2xl p-3 text-white">
+            <div class="flex justify-between mb-2 text-sm">
+                <span>ไอเทมนำโชค</span>
+                <span id="item-count">0/3</span>
+            </div>
+            <div id="item-dots" class="flex gap-2 justify-center">
+                <div class="item-dot">?</div><div class="item-dot">?</div><div class="item-dot">?</div>
+            </div>
+            <p id="scan-status" class="text-xs text-center mt-2 text-white/80">ชี้กล้องไปที่การ์ด MindAR</p>
+        </div>
+    </div>
+
+    <div id="toast" class="hidden fixed bottom-24 left-1/2 -translate-x-1/2 z-30 bg-red-600 text-white px-5 py-3 rounded-full text-sm"></div>
+
+    <div id="complete-modal" class="game-overlay hidden">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full text-center">
+            <div class="text-5xl mb-3">🎉</div>
+            <h2 class="text-xl font-bold text-red-600 mb-4">ยินดีด้วย!</h2>
+            <a href="/reward.html" class="btn-primary mx-auto no-underline">รับรางวัล</a>
+        </div>
+    </div>
+
+    <div id="ar-container" class="hidden"></div>
+
+    <template id="ar-scene-template">
+        <a-scene id="ar-scene" mindar-image="imageTargetSrc: https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.mind; maxTrack: 1; uiLoading: no; uiScanning: no; uiError: no;" renderer="antialias: false, alpha: false, precision: mediump" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+            <a-camera position="0 0 0" look-controls="enabled: false" raycaster="far: 10000; objects: .clickable"></a-camera>
+            <a-entity mindar-image-target="targetIndex: 0">
+                <a-light type="ambient" color="#FFFFFF" intensity="1.5"></a-light>
+                <a-entity id="elephant-mascot" class="clickable" position="0 0.05 0">
+                    <a-gltf-model id="elephant-model" visible="false" position="0 0.25 0" scale="0.14 0.14 0.14"></a-gltf-model>
+                    <a-entity id="elephant-fallback" visible="true">
+                        <a-sphere radius="0.22" color="#DC2626" position="0 0.28 0"></a-sphere>
+                        <a-sphere radius="0.16" color="#EF4444" position="0.16 0.48 0"></a-sphere>
+                        <a-cylinder radius="0.05" height="0.28" color="#B91C1C" position="0.3 0.38 0" rotation="0 0 -25"></a-cylinder>
+                    </a-entity>
+                    <a-ring radius-inner="0.35" radius-outer="0.4" color="#DC2626" position="0 0.01 0" rotation="-90 0 0" opacity="0.9"></a-ring>
+                </a-entity>
+            </a-entity>
+        </a-scene>
+    </template>
+
+    <script>
+    window.GAME_CONFIG = {
+        apiUrl: '/api/collect-item',
+        rewardUrl: '/reward.html',
+        itemsRequired: 3,
+        initialCount: 0,
+        lang: 'th',
+        elephantModel: '/assets/models/red_elephant_mascot_3d.glb',
+        needsHttps: false,
+        messages: {
+            tapToCollect: 'แตะช้างเพื่อเก็บ!',
+            alreadyCollected: 'เก็บแล้ว!',
+            targetFound: 'พบช้างแล้ว!',
+            scanHint: 'ชี้กล้องไปที่การ์ด MindAR',
+            requestingCamera: 'กำลังขอใช้กล้อง...',
+            loadingAr: 'กำลังเปิด AR...',
+            cameraDenied: 'ต้องอนุญatกล้อง',
+            cameraHttpsRequired: '',
+            httpsHelpSteps: '',
+            cameraHelpSteps: '',
+        }
+    };
+    </script>
+    <script src="/assets/js/game.js"></script>
+</body>
+</html>
