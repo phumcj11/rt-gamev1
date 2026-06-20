@@ -3,5 +3,9 @@ node_modules
 .env
 .env.local
 start-ngrok.bat
-setup-admin.php
-inspect-glb.php
+*.php
+admin/
+includes/
+database/
+lang/
+assets/models/model.php
