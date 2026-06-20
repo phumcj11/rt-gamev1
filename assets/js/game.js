@@ -27,8 +27,8 @@
     /* ── UI helpers ─────────────────────────────────────────── */
     function showToast(msg_, dur = 2200) {
         toast.textContent = msg_;
-        toast.classList.remove('hidden');
-        setTimeout(() => toast.classList.add('hidden'), dur);
+        toast.style.display = 'block';
+        setTimeout(() => { toast.style.display = 'none'; }, dur);
     }
 
     function updateUI() {
@@ -41,19 +41,21 @@
         });
     }
 
-    function hideLoading() { loadingScreen?.classList.add('hidden'); }
+    function hideLoading() {
+        if (loadingScreen) loadingScreen.style.display = 'none';
+    }
     function showLoading(text) {
         if (loadingText && text) loadingText.textContent = text;
-        loadingScreen?.classList.remove('hidden');
-        cameraError?.classList.add('hidden');
+        if (loadingScreen) loadingScreen.style.display = 'flex';
+        if (cameraError) cameraError.style.display = 'none';
     }
 
     function showError(message) {
         hideLoading();
-        startScreen?.classList.add('hidden');
+        if (startScreen) startScreen.style.display = 'none';
         const p = document.getElementById('camera-error-msg');
         if (p) p.textContent = message || msg.cameraDenied || 'กล้องเปิดไม่ได้';
-        cameraError?.classList.remove('hidden');
+        if (cameraError) cameraError.style.display = 'flex';
         arStarted = false;
     }
 
@@ -73,7 +75,11 @@
                 collectedCount = data.count;
                 updateUI();
                 showToast('🍀 ' + (msg.tapToCollect || 'เก็บแล้ว!'));
-                if (data.complete) setTimeout(() => completeModal.classList.remove('hidden'), 800);
+                if (data.complete) {
+                    setTimeout(() => {
+                        if (completeModal) completeModal.style.display = 'flex';
+                    }, 800);
+                }
             } else {
                 showToast(msg.alreadyCollected || 'เก็บแล้ว!');
             }
@@ -222,7 +228,7 @@
         }
 
         arStarted = true;
-        startScreen?.classList.add('hidden');
+        if (startScreen) startScreen.style.display = 'none';
         showLoading(msg.loadingAr || 'กำลังเปิด AR...');
 
         mountArScene();
