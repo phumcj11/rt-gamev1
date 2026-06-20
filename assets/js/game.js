@@ -12,7 +12,6 @@
     let modelBlobUrl = null;
     let modelLoading = false;
     let modelLoaded = false;
-    let sceneEl = null;
 
     const startScreen = document.getElementById('start-screen');
     const startBtn = document.getElementById('start-ar-btn');
@@ -27,8 +26,7 @@
     const scanStatus = document.getElementById('scan-status');
     const toast = document.getElementById('toast');
     const itemDots = document.querySelectorAll('.item-dot');
-    const arContainer = document.getElementById('ar-container');
-    const sceneTemplate = document.getElementById('ar-scene-template');
+    let sceneEl = document.getElementById('ar-scene');
 
     function showToast(message, duration = 2200) {
         toast.textContent = message;
@@ -188,6 +186,8 @@
             if (fitModelToTarget(model, 0.5)) {
                 showGltfElephant();
                 modelLoaded = true;
+            } else {
+                showFallbackElephant();
             }
         });
 
@@ -213,16 +213,52 @@
         sceneEl.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     }
 
-    function mountArScene() {
-        if (sceneEl || !sceneTemplate || !arContainer) return sceneEl;
+    function refreshSceneLayout() {
+        if (!sceneEl) return;
+        sceneEl.resize?.();
+        if (sceneEl.renderer) {
+            sceneEl.renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+    }
 
-        const clone = sceneTemplate.content.cloneNode(true);
-        arContainer.appendChild(clone);
-        arContainer.classList.remove('hidden');
-        sceneEl = document.getElementById('ar-scene');
+    function forceVisible(el) {
+        if (!el) return;
+        el.setAttribute('visible', true);
+        if (el.object3D) {
+            el.object3D.visible = true;
+            el.object3D.traverse((node) => {
+                node.visible = true;
+            });
+        }
+    }
+
+    function revealMascot() {
+        forceVisible(document.getElementById('elephant-mascot'));
+        if (modelLoaded) {
+            showGltfElephant();
+        } else {
+            showFallbackElephant();
+        }
+    }
+
+    function activateMindAR() {
+        if (!sceneEl || sceneEl.hasAttribute('mindar-image')) return;
+        const target = config.mindTarget || 'https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.mind';
+        sceneEl.setAttribute(
+            'mindar-image',
+            `imageTargetSrc: ${target}; maxTrack: 1; uiLoading: no; uiScanning: no; uiError: no;`
+        );
+    }
+
+    function showArScene() {
+        if (!sceneEl) return;
+        sceneEl.classList.remove('ar-scene-hidden');
         setupElephantModel();
         showFallbackElephant();
-        return sceneEl;
+        requestAnimationFrame(() => {
+            refreshSceneLayout();
+            setTimeout(refreshSceneLayout, 100);
+        });
     }
 
     function bindArEvents() {
@@ -233,6 +269,7 @@
             hideLoading();
             stopPreviewStream();
             optimizeRenderer();
+            refreshSceneLayout();
             loadGltfInBackground();
         });
 
@@ -250,6 +287,8 @@
             target.addEventListener('targetFound', () => {
                 targetVisible = true;
                 scanStatus.textContent = msg.targetFound || 'Target found!';
+                revealMascot();
+                refreshSceneLayout();
             });
             target.addEventListener('targetLost', () => {
                 targetVisible = false;
@@ -283,7 +322,8 @@
         try {
             await requestCameraPermission();
             showLoading(msg.loadingAr || 'Loading AR...');
-            mountArScene();
+            activateMindAR();
+            showArScene();
             bindArEvents();
 
             setTimeout(hideLoading, 8000);

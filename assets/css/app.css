@@ -91,6 +91,11 @@ body {
     z-index: 1;
 }
 
+#ar-scene.ar-scene-hidden {
+    visibility: hidden;
+    pointer-events: none;
+}
+
 body.game-page {
     overflow: hidden;
     height: 100dvh;

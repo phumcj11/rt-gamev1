@@ -91,12 +91,9 @@ renderGameHead($t['game_title'], $t);
     </div>
 </div>
 
-<div id="ar-container" class="hidden"></div>
-
-<template id="ar-scene-template">
 <a-scene
     id="ar-scene"
-    mindar-image="imageTargetSrc: <?= e($mindTarget) ?>; maxTrack: 1; uiLoading: no; uiScanning: no; uiError: no;"
+    class="ar-scene-hidden"
     color-space="sRGB"
     renderer="colorManagement: false, alpha: false, antialias: false, precision: mediump, logarithmicDepthBuffer: false"
     vr-mode-ui="enabled: false"
@@ -108,7 +105,8 @@ renderGameHead($t['game_title'], $t);
     <a-entity cursor="fuse: false; rayOrigin: mouse" raycaster="far: 10000; objects: .clickable"></a-entity>
 
     <a-entity mindar-image-target="targetIndex: 0">
-        <a-light type="ambient" color="#FFFFFF" intensity="1.5"></a-light>
+        <a-light type="ambient" color="#FFFFFF" intensity="2"></a-light>
+        <a-light type="directional" color="#FFFFFF" intensity="0.8" position="0 1 1"></a-light>
 
         <a-entity id="elephant-mascot" class="clickable" position="0 0.05 0">
             <a-gltf-model
@@ -125,21 +123,20 @@ renderGameHead($t['game_title'], $t);
                 <a-circle radius="0.12" color="#FECACA" position="-0.08 0.52 -0.05" rotation="0 30 0"></a-circle>
                 <a-circle radius="0.12" color="#FECACA" position="-0.08 0.52 0.05" rotation="0 -30 0"></a-circle>
             </a-entity>
-            <a-ring radius-inner="0.35" radius-outer="0.4" color="#DC2626" position="0 0.01 0" rotation="-90 0 0" opacity="0.9"></a-ring>
+            <a-ring radius-inner="0.35" radius-outer="0.42" color="#FBBF24" position="0 0.02 0" rotation="-90 0 0" opacity="0.95"></a-ring>
         </a-entity>
 
-        <a-entity id="lucky-item-1" class="lucky-item clickable" position="-0.4 0.5 0.02" scale="0.08 0.08 0.08">
-            <a-sphere radius="0.4" color="#DC2626"></a-sphere>
+        <a-entity class="lucky-item clickable" position="-0.38 0.48 0.03" scale="0.1 0.1 0.1">
+            <a-sphere radius="0.35" color="#DC2626"></a-sphere>
         </a-entity>
-        <a-entity id="lucky-item-2" class="lucky-item clickable" position="0.4 0.42 0.02" scale="0.07 0.07 0.07">
-            <a-sphere radius="0.4" color="#FBBF24"></a-sphere>
+        <a-entity class="lucky-item clickable" position="0.38 0.42 0.03" scale="0.09 0.09 0.09">
+            <a-sphere radius="0.35" color="#FBBF24"></a-sphere>
         </a-entity>
-        <a-entity id="lucky-item-3" class="lucky-item clickable" position="0 0.65 0.02" scale="0.07 0.07 0.07">
-            <a-sphere radius="0.4" color="#DC2626"></a-sphere>
+        <a-entity class="lucky-item clickable" position="0 0.62 0.03" scale="0.09 0.09 0.09">
+            <a-sphere radius="0.35" color="#DC2626"></a-sphere>
         </a-entity>
     </a-entity>
 </a-scene>
-</template>
 
 <script>
 window.GAME_CONFIG = {
@@ -149,6 +146,7 @@ window.GAME_CONFIG = {
     initialCount: <?= $collected ?>,
     lang: '<?= e($lang) ?>',
     elephantModel: <?= json_encode($elephantModel) ?>,
+    mindTarget: <?= json_encode($mindTarget) ?>,
     needsHttps: <?= $needsHttps ? 'true' : 'false' ?>,
     messages: {
         tapToCollect: <?= json_encode($t['tap_to_collect'], JSON_UNESCAPED_UNICODE) ?>,
