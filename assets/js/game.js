@@ -1,15 +1,16 @@
 (function () {
     'use strict';
 
-    const config = window.GAME_CONFIG || {};
-    const msg = config.messages || {};
+    const config  = window.GAME_CONFIG || {};
+    const msg     = config.messages || {};
 
     let collectedCount = config.initialCount || 0;
-    let targetVisible = false;
-    let collecting = false;
-    let arStarted = false;
-    let modelLoaded = false;
-    let sceneEl = null;
+    let targetVisible  = false;
+    let collecting     = false;
+    let arStarted      = false;
+    let modelLoaded    = false;
+    let tapCount       = 0;          // tracks which lucky-item to collect next
+    let sceneEl        = null;
 
     const startScreen   = document.getElementById('start-screen');
     const startBtn      = document.getElementById('start-ar-btn');
@@ -18,6 +19,8 @@
     const loadingText   = document.getElementById('loading-text');
     const cameraError   = document.getElementById('camera-error');
     const completeModal = document.getElementById('complete-modal');
+    const tapOverlay    = document.getElementById('tap-overlay');
+    const tapBtn        = document.getElementById('tap-btn');
     const itemCount     = document.getElementById('item-count');
     const scanStatus    = document.getElementById('scan-status');
     const toast         = document.getElementById('toast');
@@ -25,44 +28,56 @@
     const sceneTemplate = document.getElementById('ar-scene-template');
 
     /* ── UI helpers ─────────────────────────────────────────── */
-    function showToast(msg_, dur = 2200) {
-        toast.textContent = msg_;
-        toast.style.display = 'block';
-        setTimeout(() => { toast.style.display = 'none'; }, dur);
+    function show(el, d) { if (el) el.style.display = d || 'flex'; }
+    function hide(el)    { if (el) el.style.display = 'none'; }
+
+    function showToast(text, dur) {
+        if (!toast) return;
+        toast.textContent = text;
+        show(toast, 'block');
+        clearTimeout(toast._t);
+        toast._t = setTimeout(() => hide(toast), dur || 2200);
     }
 
     function updateUI() {
-        itemCount.textContent = collectedCount + '/' + config.itemsRequired;
+        if (itemCount) itemCount.textContent = collectedCount + '/' + config.itemsRequired;
         itemDots.forEach((dot, i) => {
-            if (i < collectedCount) {
-                dot.classList.add('collected');
-                dot.textContent = '🍀';
-            }
+            if (i < collectedCount) { dot.classList.add('collected'); dot.textContent = '🍀'; }
         });
     }
 
-    function hideLoading() {
-        if (loadingScreen) loadingScreen.style.display = 'none';
-    }
+    function hideLoading()     { hide(loadingScreen); }
     function showLoading(text) {
         if (loadingText && text) loadingText.textContent = text;
-        if (loadingScreen) loadingScreen.style.display = 'flex';
-        if (cameraError) cameraError.style.display = 'none';
+        show(loadingScreen);
+        hide(cameraError);
     }
-
     function showError(message) {
         hideLoading();
-        if (startScreen) startScreen.style.display = 'none';
+        hide(startScreen);
+        hide(tapOverlay);
         const p = document.getElementById('camera-error-msg');
-        if (p) p.textContent = message || msg.cameraDenied || 'กล้องเปิดไม่ได้';
-        if (cameraError) cameraError.style.display = 'flex';
+        if (p) p.textContent = message || 'กล้องเปิดไม่ได้';
+        show(cameraError);
         arStarted = false;
     }
 
-    /* ── Collect item API ────────────────────────────────────── */
-    async function collectItem(itemId) {
-        if (collecting) return;
+    /* ── Tap overlay ─────────────────────────────────────────── */
+    function showTapOverlay() {
+        if (tapBtn) tapBtn.textContent = '🐘 แตะช้าง! (' + collectedCount + '/3)';
+        show(tapOverlay, 'block');
+    }
+    function hideTapOverlay() { hide(tapOverlay); }
+
+    /* ── Collect item ─────────────────────────────────────────── */
+    const ITEM_IDS = ['lucky_item_1', 'lucky_item_2', 'lucky_item_3'];
+
+    async function collectItem() {
+        if (collecting || !targetVisible) return;
         collecting = true;
+
+        const itemId = ITEM_IDS[tapCount % ITEM_IDS.length];
+
         try {
             const res  = await fetch(config.apiUrl, {
                 method: 'POST',
@@ -71,20 +86,23 @@
                 body: JSON.stringify({ item_id: itemId }),
             });
             const data = await res.json();
+
             if (data.added) {
+                tapCount++;
                 collectedCount = data.count;
                 updateUI();
-                showToast('🍀 ' + (msg.tapToCollect || 'เก็บแล้ว!'));
+                showToast('🍀 +1  (' + data.count + '/3)');
+                if (tapBtn) tapBtn.textContent = '🐘 แตะช้าง! (' + data.count + '/3)';
+
                 if (data.complete) {
-                    setTimeout(() => {
-                        if (completeModal) completeModal.style.display = 'flex';
-                    }, 800);
+                    hideTapOverlay();
+                    setTimeout(() => show(completeModal), 800);
                 }
             } else {
                 showToast(msg.alreadyCollected || 'เก็บแล้ว!');
             }
         } catch {
-            showToast('Connection error');
+            showToast('Connection error — try again');
         } finally {
             collecting = false;
         }
@@ -95,36 +113,14 @@
     function getFallback() { return document.getElementById('elephant-fallback'); }
 
     function showFallback() {
-        getModel()?.setAttribute('visible', 'false');
-        getFallback()?.setAttribute('visible', 'true');
+        const m = getModel(), f = getFallback();
+        if (m) m.setAttribute('visible', 'false');
+        if (f) f.setAttribute('visible', 'true');
     }
-
     function showGltf() {
-        getFallback()?.setAttribute('visible', 'false');
-        getModel()?.setAttribute('visible', 'true');
-    }
-
-    function fitModel(modelEl) {
-        if (!modelEl || typeof THREE === 'undefined') return false;
-        const mesh = modelEl.getObject3D('mesh');
-        if (!mesh) return false;
-
-        mesh.updateMatrixWorld(true);
-        const box = new THREE.Box3().setFromObject(mesh);
-        if (box.isEmpty()) return false;
-
-        const size   = box.getSize(new THREE.Vector3());
-        const center = box.getCenter(new THREE.Vector3());
-        const maxDim = Math.max(size.x, size.y, size.z, 0.001);
-        const s      = 0.5 / maxDim;
-
-        modelEl.setAttribute('scale', `${s} ${s} ${s}`);
-        modelEl.setAttribute('position', {
-            x: -center.x * s,
-            y: -center.y * s + 0.28,
-            z: -center.z * s + 0.05,
-        });
-        return true;
+        const m = getModel(), f = getFallback();
+        if (f) f.setAttribute('visible', 'false');
+        if (m) m.setAttribute('visible', 'true');
     }
 
     function setupModelListeners() {
@@ -133,13 +129,38 @@
         model.dataset.listenersSet = '1';
 
         model.addEventListener('model-loaded', () => {
-            if (fitModel(model)) {
-                showGltf();
-                modelLoaded = true;
-            } else {
-                showFallback();
+            // Try bounding-box auto-fit, fall back to known-good fixed scale
+            let fitted = false;
+            try {
+                const mesh = model.getObject3D('mesh');
+                if (mesh && typeof THREE !== 'undefined') {
+                    mesh.updateMatrixWorld(true);
+                    const box = new THREE.Box3().setFromObject(mesh);
+                    if (!box.isEmpty()) {
+                        const size   = box.getSize(new THREE.Vector3());
+                        const center = box.getCenter(new THREE.Vector3());
+                        const maxDim = Math.max(size.x, size.y, size.z, 0.001);
+                        const s      = 0.28 / maxDim;
+                        model.setAttribute('scale', `${s} ${s} ${s}`);
+                        model.setAttribute('position', {
+                            x: -center.x * s,
+                            y: -center.y * s + 0.15,
+                            z: -center.z * s,
+                        });
+                        fitted = true;
+                    }
+                }
+            } catch (_) { /* ignore */ }
+
+            if (!fitted) {
+                model.setAttribute('scale', '0.14 0.14 0.14');
+                model.setAttribute('position', '0 0.08 0');
             }
+
+            showGltf();
+            modelLoaded = true;
         });
+
         model.addEventListener('model-error', () => showFallback());
     }
 
@@ -148,88 +169,64 @@
         if (sceneEl) return sceneEl;
         if (!sceneTemplate) return null;
 
-        // Append directly to body — MindAR requires this for correct compositing
+        // Must append directly to body — MindAR composites video + canvas at body level
         const clone = sceneTemplate.content.cloneNode(true);
         document.body.appendChild(clone);
 
         sceneEl = document.getElementById('ar-scene');
         if (!sceneEl) return null;
 
-        // Set up model listeners immediately (safe before A-Frame init)
         setupModelListeners();
-
         return sceneEl;
     }
 
-    /* ── Bind AR events ──────────────────────────────────────── */
+    /* ── AR events ───────────────────────────────────────────── */
     function bindArEvents() {
         if (!sceneEl || sceneEl.dataset.bound) return;
         sceneEl.dataset.bound = '1';
 
         sceneEl.addEventListener('arReady', () => {
             hideLoading();
-            // Load GLB model in background
+            // Begin loading GLB model now (user already sees fallback)
             const model = getModel();
-            if (model && !model.getAttribute('src')) {
+            if (model) {
                 model.setAttribute('src', config.elephantModel || '/assets/models/red_elephant_mascot_3d.glb');
             }
         });
 
-        sceneEl.addEventListener('arError', () => {
-            showError(msg.cameraDenied);
-        });
+        sceneEl.addEventListener('arError', () => showError(msg.cameraDenied));
 
-        // Target tracking events
+        // Wait for scene to be ready before querying mindar-image-target
         sceneEl.addEventListener('loaded', () => {
             const targetEntity = sceneEl.querySelector('[mindar-image-target]');
             if (!targetEntity) return;
 
             targetEntity.addEventListener('targetFound', () => {
                 targetVisible = true;
-                if (scanStatus) scanStatus.textContent = msg.targetFound || 'พบช้างแล้ว!';
-                // Show whichever elephant we have
-                if (modelLoaded) showGltf(); else showFallback();
+                if (scanStatus) scanStatus.textContent = msg.targetFound || 'พบช้างแล้ว! — แตะช้าง';
+                showTapOverlay();
             });
 
             targetEntity.addEventListener('targetLost', () => {
                 targetVisible = false;
                 if (scanStatus) scanStatus.textContent = msg.scanHint || 'ชี้กล้องไปที่การ์ด';
-            });
-        });
-
-        // Click to collect
-        sceneEl.addEventListener('click', (e) => {
-            if (!targetVisible) return;
-            const el = e.target?.closest?.('#elephant-mascot') || e.target;
-            if (el?.id === 'elephant-mascot' || el?.closest?.('#elephant-mascot')) {
-                collectItem('elephant_main');
-            }
-        });
-
-        // Touch to collect (mobile)
-        document.getElementById('elephant-mascot')?.addEventListener('click', () => {
-            if (targetVisible) collectItem('elephant_main');
-        });
-
-        document.querySelectorAll('.lucky-item').forEach((el, i) => {
-            el.addEventListener('click', () => {
-                if (targetVisible) collectItem('lucky_item_' + (i + 1));
+                hideTapOverlay();
             });
         });
     }
 
-    /* ── Start AR ────────────────────────────────────────────── */
+    /* ── Start AR ─────────────────────────────────────────────── */
     async function startAr() {
         if (arStarted) return;
 
         if (!window.isSecureContext) {
-            showError(msg.cameraHttpsRequired || 'ต้องใช้ HTTPS');
+            showError(msg.cameraHttpsRequired || 'ต้องใช้ HTTPS — เปิดผ่านลิงก์ Vercel');
             return;
         }
 
         arStarted = true;
-        if (startScreen) startScreen.style.display = 'none';
-        showLoading(msg.loadingAr || 'กำลังเปิด AR...');
+        hide(startScreen);
+        showLoading(msg.loadingAr || 'กำลังเปิดกล้อง AR...');
 
         mountArScene();
         if (!sceneEl) {
@@ -239,11 +236,12 @@
 
         bindArEvents();
 
-        // Safety timeout — if arReady never fires within 25s, hide loader anyway
+        // Safety: hide loader after 25 s even if arReady never fires
         setTimeout(hideLoading, 25000);
     }
 
+    /* ── Wire up buttons ─────────────────────────────────────── */
     startBtn?.addEventListener('click', startAr);
-
+    tapBtn?.addEventListener('click', collectItem);
     retryBtn?.addEventListener('click', () => window.location.reload());
 })();
