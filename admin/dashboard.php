@@ -30,6 +30,7 @@ $recentPlayers = $recentStmt->fetchAll();
         <div class="max-w-5xl mx-auto flex items-center justify-between">
             <h1 class="font-bold">🐘 <?= e($t['dashboard']) ?></h1>
             <div class="flex gap-3 text-sm">
+                <a href="<?= BASE_URL ?>/admin/preview-3d.php" class="hover:underline">ตั้งค่า 3D</a>
                 <a href="<?= BASE_URL ?>/admin/redeem.php" class="hover:underline"><?= e($t['redeem_coupon']) ?></a>
                 <a href="<?= BASE_URL ?>/admin/logout.php" class="hover:underline"><?= e($t['logout']) ?></a>
             </div>

@@ -1,0 +1,21 @@
+{
+    "modelUrl": "/assets/models/red_elephant_mascot_3d.glb",
+    "preferGltf": true,
+    "autoFit": true,
+    "autoFitHeight": 0.35,
+    "gltfScale": 0.22,
+    "gltfPosX": 0,
+    "gltfPosY": 0.15,
+    "gltfPosZ": 0.02,
+    "gltfRotX": 0,
+    "gltfRotY": 0,
+    "gltfRotZ": 0,
+    "mascotPosX": 0,
+    "mascotPosY": 0,
+    "mascotPosZ": 0.02,
+    "showEmoji": true,
+    "emojiScale": 2.5,
+    "emojiPosY": 0.38,
+    "fallbackScale": 1,
+    "updatedAt": null
+}

@@ -9,7 +9,8 @@
     let collecting     = false;
     let arStarted      = false;
     let modelLoaded    = false;
-    let tapCount       = 0;          // tracks which lucky-item to collect next
+    let modelSettings  = null;
+    let tapCount       = 0;
     let sceneEl        = null;
 
     const startScreen   = document.getElementById('start-screen');
@@ -108,6 +109,83 @@
         }
     }
 
+    /* ── Model settings (from admin) ─────────────────────────── */
+    function resolveAssetUrl(path) {
+        if (!path || path.startsWith('http')) return path;
+        const base = config.baseUrl || '';
+        if (base && path.startsWith(base)) return path;
+        if (path.startsWith('/')) return base + path;
+        return base + '/' + path;
+    }
+
+    async function fetchModelSettings() {
+        if (modelSettings) return modelSettings;
+        const url = config.modelSettingsUrl || '/assets/config/ar-model.json';
+        try {
+            const res = await fetch(resolveAssetUrl(url) + (url.includes('?') ? '&' : '?') + 't=' + Date.now());
+            if (res.ok) modelSettings = await res.json();
+        } catch (_) { /* use defaults */ }
+        if (!modelSettings) {
+            modelSettings = {
+                preferGltf: true, autoFit: true, autoFitHeight: 0.35,
+                gltfScale: 0.22, gltfPosX: 0, gltfPosY: 0.15, gltfPosZ: 0.02,
+                gltfRotX: 0, gltfRotY: 0, gltfRotZ: 0,
+                mascotPosX: 0, mascotPosY: 0, mascotPosZ: 0.02,
+                showEmoji: true, emojiScale: 2.5, emojiPosY: 0.38, fallbackScale: 1,
+            };
+        }
+        return modelSettings;
+    }
+
+    function applySceneSettings(s) {
+        if (!s) return;
+        const mascot = document.getElementById('elephant-mascot');
+        const fallback = getFallback();
+        const emoji = document.getElementById('elephant-emoji');
+
+        if (mascot) mascot.setAttribute('position', `${s.mascotPosX} ${s.mascotPosY} ${s.mascotPosZ}`);
+        if (fallback) fallback.setAttribute('scale', `${s.fallbackScale} ${s.fallbackScale} ${s.fallbackScale}`);
+        if (emoji) {
+            emoji.setAttribute('visible', s.showEmoji ? 'true' : 'false');
+            emoji.setAttribute('scale', `${s.emojiScale} ${s.emojiScale} ${s.emojiScale}`);
+            emoji.setAttribute('position', `0 ${s.emojiPosY} 0.01`);
+        }
+    }
+
+    function applyGltfSettings(model, s) {
+        if (!model || !s) return;
+
+        if (s.autoFit) {
+            try {
+                const mesh = model.getObject3D('mesh');
+                if (mesh && typeof THREE !== 'undefined') {
+                    mesh.updateMatrixWorld(true);
+                    const box = new THREE.Box3().setFromObject(mesh);
+                    if (!box.isEmpty()) {
+                        const size = box.getSize(new THREE.Vector3());
+                        const center = box.getCenter(new THREE.Vector3());
+                        const maxDim = Math.max(size.x, size.y, size.z, 0.001);
+                        let sc = (s.autoFitHeight || 0.35) / maxDim;
+                        sc = Math.max(0.05, Math.min(sc, 2));
+                        model.setAttribute('scale', `${sc} ${sc} ${sc}`);
+                        model.setAttribute('position', {
+                            x: -center.x * sc + (s.gltfPosX || 0),
+                            y: -center.y * sc + (s.gltfPosY || 0.15),
+                            z: -center.z * sc + (s.gltfPosZ || 0.02),
+                        });
+                        model.setAttribute('rotation', `${s.gltfRotX||0} ${s.gltfRotY||0} ${s.gltfRotZ||0}`);
+                        return;
+                    }
+                }
+            } catch (_) { /* fall through */ }
+        }
+
+        const sc = s.gltfScale || 0.22;
+        model.setAttribute('scale', `${sc} ${sc} ${sc}`);
+        model.setAttribute('position', `${s.gltfPosX||0} ${s.gltfPosY||0.15} ${s.gltfPosZ||0.02}`);
+        model.setAttribute('rotation', `${s.gltfRotX||0} ${s.gltfRotY||0} ${s.gltfRotZ||0}`);
+    }
+
     /* ── Elephant model helpers ──────────────────────────────── */
     function getModel()    { return document.getElementById('elephant-model'); }
     function getFallback() { return document.getElementById('elephant-fallback'); }
@@ -120,8 +198,10 @@
     }
 
     function showGltf() {
+        const s = modelSettings || {};
+        if (s.preferGltf === false) { showFallback(); return; }
+
         const mesh = getModel()?.getObject3D('mesh');
-        // Only swap to GLB if it actually has geometry
         if (!mesh || mesh.children.length === 0) {
             showFallback();
             return;
@@ -137,11 +217,15 @@
         const model = getModel();
         if (!model) return;
 
-        showFallback(); // always show primitive first
+        const s = await fetchModelSettings();
+        applySceneSettings(s);
+        showFallback();
+
+        if (s.preferGltf === false) return;
 
         try {
-            const url = config.elephantModel || '/assets/models/red_elephant_mascot_3d.glb';
-            const res = await fetch(url, { cache: 'force-cache' });
+            let url = resolveAssetUrl(s.modelUrl || config.elephantModel || '/assets/models/red_elephant_mascot_3d.glb');
+            const res = await fetch(url, { cache: 'no-cache' });
             if (!res.ok) throw new Error('HTTP ' + res.status);
             const buf = await res.arrayBuffer();
             const blobUrl = URL.createObjectURL(new Blob([buf], { type: 'model/gltf-binary' }));
@@ -156,34 +240,9 @@
         if (!model || model.dataset.listenersSet) return;
         model.dataset.listenersSet = '1';
 
-        model.addEventListener('model-loaded', () => {
-            // Fixed scale — auto-fit often produces invisible results on mobile
-            model.setAttribute('scale', '0.22 0.22 0.22');
-            model.setAttribute('position', '0 0.18 0.02');
-            model.setAttribute('rotation', '0 0 0');
-
-            // Try centering via bounding box, but clamp scale
-            try {
-                const mesh = model.getObject3D('mesh');
-                if (mesh && typeof THREE !== 'undefined') {
-                    mesh.updateMatrixWorld(true);
-                    const box = new THREE.Box3().setFromObject(mesh);
-                    if (!box.isEmpty()) {
-                        const size   = box.getSize(new THREE.Vector3());
-                        const center = box.getCenter(new THREE.Vector3());
-                        const maxDim = Math.max(size.x, size.y, size.z, 0.001);
-                        let s = 0.35 / maxDim;
-                        s = Math.max(0.08, Math.min(s, 0.5)); // clamp
-                        model.setAttribute('scale', `${s} ${s} ${s}`);
-                        model.setAttribute('position', {
-                            x: -center.x * s,
-                            y: -center.y * s + 0.2,
-                            z: -center.z * s + 0.02,
-                        });
-                    }
-                }
-            } catch (_) { /* use fixed scale above */ }
-
+        model.addEventListener('model-loaded', async () => {
+            const s = modelSettings || await fetchModelSettings();
+            applyGltfSettings(model, s);
             showGltf();
             modelLoaded = true;
         });
@@ -225,10 +284,12 @@
             const targetEntity = sceneEl.querySelector('[mindar-image-target]');
             if (!targetEntity) return;
 
-            targetEntity.addEventListener('targetFound', () => {
+            targetEntity.addEventListener('targetFound', async () => {
                 targetVisible = true;
                 if (scanStatus) scanStatus.textContent = msg.targetFound || 'พบช้างแล้ว! — แตะช้าง';
-                showFallback(); // ensure elephant is visible when target found
+                await fetchModelSettings();
+                applySceneSettings(modelSettings);
+                if (modelLoaded) showGltf(); else showFallback();
                 showTapOverlay();
             });
 
@@ -258,6 +319,9 @@
             showError('ไม่สามารถสร้างฉาก AR ได้');
             return;
         }
+
+        await fetchModelSettings();
+        applySceneSettings(modelSettings);
 
         bindArEvents();
 

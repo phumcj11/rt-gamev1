@@ -138,6 +138,8 @@ window.GAME_CONFIG = {
     initialCount: <?= $collected ?>,
     lang: '<?= e($lang) ?>',
     elephantModel: <?= json_encode($elephantModel) ?>,
+    modelSettingsUrl: '<?= BASE_URL ?>/api/model-settings.php',
+    baseUrl: '<?= BASE_URL ?>',
     mindTarget: <?= json_encode($mindTarget) ?>,
     needsHttps: <?= $needsHttps ? 'true' : 'false' ?>,
     messages: {

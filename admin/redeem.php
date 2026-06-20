@@ -61,6 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['redeem_id'])) {
             <h1 class="font-bold">🎫 <?= e($t['redeem_coupon']) ?></h1>
             <div class="flex gap-3 text-sm">
                 <a href="<?= BASE_URL ?>/admin/dashboard.php" class="hover:underline"><?= e($t['dashboard']) ?></a>
+                <a href="<?= BASE_URL ?>/admin/preview-3d.php" class="hover:underline">ตั้งค่า 3D</a>
                 <a href="<?= BASE_URL ?>/admin/logout.php" class="hover:underline"><?= e($t['logout']) ?></a>
             </div>
         </div>
