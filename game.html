@@ -9,102 +9,130 @@
     <link rel="stylesheet" href="/assets/css/app.css">
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+    <style>
+        /* Game HUD and overlays sit above the AR scene */
+        #start-screen, #loading-screen, #camera-error, #complete-modal,
+        .game-hud, #toast { position: fixed; z-index: 50; }
+
+        /* AR scene is full-screen at the bottom of the stack */
+        #ar-scene {
+            position: fixed !important;
+            top: 0 !important; left: 0 !important;
+            width: 100% !important; height: 100% !important;
+            z-index: 1 !important;
+        }
+        /* MindAR video feed */
+        #ar-scene video {
+            position: fixed !important;
+            top: 0 !important; left: 0 !important;
+            width: 100% !important; height: 100% !important;
+            object-fit: cover !important;
+            z-index: 1 !important;
+        }
+        /* THREE.js canvas */
+        #ar-scene canvas {
+            position: fixed !important;
+            top: 0 !important; left: 0 !important;
+            width: 100% !important; height: 100% !important;
+            z-index: 2 !important;
+        }
+    </style>
 </head>
-<body class="game-page bg-black overflow-hidden">
-    <header class="game-header bg-red-600 text-white shadow-md">
-        <div class="max-w-lg mx-auto px-4 py-3 flex justify-between items-center">
-            <a href="/index.html" class="text-sm font-bold">🐘 AR Lucky Elephant Hunt</a>
-            <a href="/demo.html" class="text-xs bg-white/20 px-3 py-1 rounded-full">โหมดง่าย</a>
-        </div>
+<body class="bg-black overflow-hidden" style="height:100dvh;height:100vh;margin:0;padding:0;">
+
+    <!-- header -->
+    <header style="position:fixed;top:0;left:0;right:0;z-index:60;background:#DC2626;color:white;padding:0.75rem 1rem;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-weight:700;font-size:0.875rem;">🐘 AR Lucky Elephant Hunt</span>
+        <a href="/demo.html" style="font-size:0.75rem;background:rgba(255,255,255,0.2);padding:0.25rem 0.75rem;border-radius:9999px;color:white;text-decoration:none;">โหมดง่าย</a>
     </header>
 
-    <div id="start-screen" class="fixed inset-0 z-50 bg-red-600 flex flex-col items-center justify-center text-white p-6 text-center">
-        <div class="text-6xl mb-4">📷</div>
-        <h2 class="text-xl font-bold mb-2">เริ่มเกม AR</h2>
-        <p class="text-sm text-red-100 mb-6">กดปุ่มด้านล่าง แล้วเลือก Allow เมื่อเบราว์เซอร์ถาม</p>
-        <button id="start-ar-btn" type="button" class="btn-primary max-w-xs">อนุญาตใช้กล้อง</button>
+    <!-- start screen -->
+    <div id="start-screen" style="inset:0;background:#DC2626;display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;padding:1.5rem;text-align:center;">
+        <div style="font-size:4rem;margin-bottom:1rem;">📷</div>
+        <h2 style="font-size:1.25rem;font-weight:700;margin-bottom:0.5rem;">เริ่มเกม AR</h2>
+        <p style="font-size:0.875rem;opacity:0.9;margin-bottom:1.5rem;max-width:280px;">กดปุ่มด้านล่าง แล้วเลือก Allow เมื่อเบราว์เซอร์ถาม</p>
+        <button id="start-ar-btn" type="button" style="background:white;color:#DC2626;font-weight:700;padding:1rem 2rem;border-radius:9999px;border:none;font-size:1rem;width:100%;max-width:280px;cursor:pointer;">อนุญาตใช้กล้อง</button>
     </div>
 
-    <div id="loading-screen" class="hidden fixed inset-0 z-40 bg-red-600 flex flex-col items-center justify-center text-white p-6">
-        <div class="text-5xl mb-4 animate-pulse">🐘</div>
-        <p id="loading-text" class="text-lg">กำลังเปิด AR...</p>
+    <!-- loading screen -->
+    <div id="loading-screen" style="inset:0;background:#DC2626;display:none;flex-direction:column;align-items:center;justify-content:center;color:white;padding:1.5rem;">
+        <div style="font-size:3rem;margin-bottom:1rem;animation:pulse 1s infinite;">🐘</div>
+        <p id="loading-text" style="font-size:1.125rem;">กำลังเปิด AR...</p>
     </div>
 
-    <div id="camera-error" class="hidden fixed inset-0 z-40 bg-gray-900 flex flex-col items-center justify-center text-white p-6 text-center">
-        <p class="mb-4">ต้องอนุญatกล้อง — ไปที่ Settings แล้ว Allow Camera</p>
-        <a href="/demo.html" class="btn-primary max-w-xs mb-3 no-underline">เล่นโหมดง่ายแทน</a>
+    <!-- camera error -->
+    <div id="camera-error" style="inset:0;background:#111827;display:none;flex-direction:column;align-items:center;justify-content:center;color:white;padding:1.5rem;text-align:center;">
+        <div style="font-size:3rem;margin-bottom:1rem;">📷</div>
+        <p id="camera-error-msg" style="margin-bottom:1rem;font-size:1rem;">กล้องเปิดไม่ได้</p>
+        <a href="/demo.html" style="background:#DC2626;color:white;font-weight:700;padding:1rem 2rem;border-radius:9999px;text-decoration:none;display:block;width:100%;max-width:280px;text-align:center;margin-bottom:0.75rem;">เล่นโหมดง่ายแทน</a>
+        <button id="retry-camera-btn" style="background:white;color:#DC2626;border:2px solid #DC2626;font-weight:700;padding:0.75rem 2rem;border-radius:9999px;cursor:pointer;width:100%;max-width:280px;">ลองใหม่</button>
     </div>
 
-    <div class="game-hud px-4">
-        <div class="max-w-lg mx-auto bg-black/60 rounded-2xl p-3 text-white">
-            <div class="flex justify-between mb-2 text-sm">
+    <!-- HUD -->
+    <div class="game-hud" style="top:60px;left:0;right:0;padding:0 1rem;">
+        <div style="max-width:480px;margin:0 auto;background:rgba(0,0,0,0.65);border-radius:1rem;padding:0.75rem;color:white;">
+            <div style="display:flex;justify-content:space-between;font-size:0.875rem;margin-bottom:0.5rem;">
                 <span>ไอเทมนำโชค</span>
-                <span id="item-count">0/3</span>
+                <span id="item-count" style="font-weight:700;">0/3</span>
             </div>
-            <div id="item-dots" class="flex gap-2 justify-center">
-                <div class="item-dot">?</div><div class="item-dot">?</div><div class="item-dot">?</div>
+            <div style="display:flex;gap:0.5rem;justify-content:center;" id="item-dots-container">
+                <div class="item-dot">?</div>
+                <div class="item-dot">?</div>
+                <div class="item-dot">?</div>
             </div>
-            <p id="scan-status" class="text-xs text-center mt-2 text-white/80">ชี้กล้องไปที่การ์ด MindAR</p>
+            <p id="scan-status" style="font-size:0.75rem;text-align:center;margin-top:0.5rem;opacity:0.8;">ชี้กล้องไปที่การ์ด MindAR</p>
         </div>
     </div>
 
-    <div id="toast" class="hidden fixed bottom-24 left-1/2 -translate-x-1/2 z-30 bg-red-600 text-white px-5 py-3 rounded-full text-sm"></div>
+    <!-- toast -->
+    <div id="toast" style="bottom:6rem;left:50%;transform:translateX(-50%);background:#DC2626;color:white;padding:0.75rem 1.25rem;border-radius:9999px;font-size:0.875rem;display:none;white-space:nowrap;"></div>
 
-    <div id="complete-modal" class="game-overlay hidden">
-        <div class="bg-white rounded-2xl p-6 max-w-sm w-full text-center">
-            <div class="text-5xl mb-3">🎉</div>
-            <h2 class="text-xl font-bold text-red-600 mb-4">ยินดีด้วย!</h2>
-            <a href="/reward.html" class="btn-primary mx-auto no-underline">รับรางวัล</a>
+    <!-- complete modal -->
+    <div id="complete-modal" style="inset:0;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;padding:1rem;">
+        <div style="background:white;border-radius:1rem;padding:1.5rem;max-width:320px;width:100%;text-align:center;">
+            <div style="font-size:3rem;margin-bottom:0.75rem;">🎉</div>
+            <h2 style="font-size:1.25rem;font-weight:700;color:#DC2626;margin-bottom:1rem;">ยินดีด้วย!</h2>
+            <a href="/reward.html" style="background:#DC2626;color:white;font-weight:700;padding:1rem 2rem;border-radius:9999px;text-decoration:none;display:block;">รับรางวัล</a>
         </div>
     </div>
 
-    <div id="ar-container" style="display:none;position:fixed;inset:0;z-index:1;"></div>
-
+    <!-- AR scene template — NOT in DOM, cloned on demand into body -->
     <template id="ar-scene-template">
         <a-scene
             id="ar-scene"
             mindar-image="imageTargetSrc: https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.mind; maxTrack: 1; uiLoading: no; uiScanning: no; uiError: no;"
             color-space="sRGB"
-            renderer="alpha: true, antialias: false, precision: mediump, colorManagement: false"
+            renderer="antialias: false; alpha: true; colorManagement: false; precision: mediump"
             vr-mode-ui="enabled: false"
             device-orientation-permission-ui="enabled: false"
         >
-            <a-assets timeout="120000"></a-assets>
+            <a-assets timeout="60000"></a-assets>
 
-            <a-camera position="0 0 0" look-controls="enabled: false" raycaster="far: 10000; objects: .clickable"></a-camera>
-            <a-entity cursor="fuse: false; rayOrigin: mouse" raycaster="far: 10000; objects: .clickable"></a-entity>
+            <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
             <a-entity mindar-image-target="targetIndex: 0">
-                <a-light type="ambient" color="#FFFFFF" intensity="2"></a-light>
-                <a-light type="directional" color="#FFFFFF" intensity="0.8" position="0 1 1"></a-light>
+                <a-light type="ambient" color="#ffffff" intensity="2"></a-light>
+                <a-light type="directional" color="#ffffff" intensity="1" position="0 2 2"></a-light>
 
-                <a-entity id="elephant-mascot" class="clickable" position="0 0.05 0">
-                    <a-gltf-model
-                        id="elephant-model"
-                        src="/assets/models/red_elephant_mascot_3d.glb"
-                        position="0 0.25 0"
-                        scale="0.14 0.14 0.14"
-                        visible="false"
-                    ></a-gltf-model>
-                    <a-entity id="elephant-fallback" visible="true">
-                        <a-sphere radius="0.22" color="#DC2626" position="0 0.28 0"></a-sphere>
-                        <a-sphere radius="0.16" color="#EF4444" position="0.16 0.48 0"></a-sphere>
-                        <a-cylinder radius="0.05" height="0.28" color="#B91C1C" position="0.3 0.38 0" rotation="0 0 -25"></a-cylinder>
-                        <a-circle radius="0.12" color="#FECACA" position="-0.08 0.52 -0.05" rotation="0 30 0"></a-circle>
-                        <a-circle radius="0.12" color="#FECACA" position="-0.08 0.52 0.05" rotation="0 -30 0"></a-circle>
+                <!-- elephant-mascot: clickable to collect -->
+                <a-entity id="elephant-mascot" position="0 0 0">
+                    <!-- fallback primitive elephant (always shown until GLB loads) -->
+                    <a-entity id="elephant-fallback">
+                        <a-sphere color="#DC2626" radius="0.22" position="0 0.3 0"></a-sphere>
+                        <a-sphere color="#EF4444" radius="0.15" position="0.16 0.5 0"></a-sphere>
+                        <a-cylinder color="#B91C1C" radius="0.05" height="0.26" position="0.3 0.4 0" rotation="0 0 -25"></a-cylinder>
+                        <a-circle color="#FECACA" radius="0.1" position="-0.08 0.54 0.01" rotation="0 0 0"></a-circle>
                     </a-entity>
-                    <a-ring radius-inner="0.35" radius-outer="0.42" color="#FBBF24" position="0 0.02 0" rotation="-90 0 0" opacity="0.95"></a-ring>
+                    <!-- 3D GLB model (loaded after arReady) -->
+                    <a-gltf-model id="elephant-model" visible="false" position="0 0.28 0" scale="0.14 0.14 0.14"></a-gltf-model>
+                    <!-- gold ring on ground -->
+                    <a-ring color="#FBBF24" radius-inner="0.35" radius-outer="0.42" position="0 0.01 0" rotation="-90 0 0"></a-ring>
                 </a-entity>
 
-                <a-entity class="lucky-item clickable" position="-0.38 0.48 0.03" scale="0.1 0.1 0.1">
-                    <a-sphere radius="0.35" color="#DC2626"></a-sphere>
-                </a-entity>
-                <a-entity class="lucky-item clickable" position="0.38 0.42 0.03" scale="0.09 0.09 0.09">
-                    <a-sphere radius="0.35" color="#FBBF24"></a-sphere>
-                </a-entity>
-                <a-entity class="lucky-item clickable" position="0 0.62 0.03" scale="0.09 0.09 0.09">
-                    <a-sphere radius="0.35" color="#DC2626"></a-sphere>
-                </a-entity>
+                <!-- lucky items -->
+                <a-sphere id="lucky-item-1" class="lucky-item" color="#DC2626" radius="0.06" position="-0.38 0.12 0.05"></a-sphere>
+                <a-sphere id="lucky-item-2" class="lucky-item" color="#FBBF24" radius="0.05" position="0.38 0.1 0.05"></a-sphere>
+                <a-sphere id="lucky-item-3" class="lucky-item" color="#DC2626" radius="0.05" position="0 0.18 0.05"></a-sphere>
             </a-entity>
         </a-scene>
     </template>
@@ -117,19 +145,15 @@
         initialCount: 0,
         lang: 'th',
         elephantModel: '/assets/models/red_elephant_mascot_3d.glb',
-        mindTarget: 'https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.mind',
         needsHttps: false,
         messages: {
-            tapToCollect: 'แตะช้างเพื่อเก็บ!',
+            tapToCollect:   'แตะช้างเพื่อเก็บ!',
             alreadyCollected: 'เก็บแล้ว!',
-            targetFound: 'พบช้างแล้ว!',
-            scanHint: 'ชี้กล้องไปที่การ์ด MindAR',
-            requestingCamera: 'กำลังขอใช้กล้อง...',
-            loadingAr: 'กำลังเปิด AR...',
-            cameraDenied: 'ต้องอนุญatกล้อง',
-            cameraHttpsRequired: '',
-            httpsHelpSteps: '',
-            cameraHelpSteps: '',
+            targetFound:    'พบช้างแล้ว! — แตะช้าง',
+            scanHint:       'ชี้กล้องไปที่การ์ด MindAR',
+            loadingAr:      'กำลังเปิด AR...',
+            cameraDenied:   'กล้องเปิดไม่ได้ — ตรวจสอบสิทธิ์ใน Settings',
+            cameraHttpsRequired: 'ต้องใช้ HTTPS — ใช้ลิงก์ Vercel',
         }
     };
     </script>

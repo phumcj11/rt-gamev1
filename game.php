@@ -91,53 +91,39 @@ renderGameHead($t['game_title'], $t);
     </div>
 </div>
 
-<div id="ar-container" style="display:none;position:fixed;inset:0;z-index:1;"></div>
+<div id="ar-container" style="display:none;"></div>
 
 <template id="ar-scene-template">
 <a-scene
     id="ar-scene"
     mindar-image="imageTargetSrc: <?= e($mindTarget) ?>; maxTrack: 1; uiLoading: no; uiScanning: no; uiError: no;"
     color-space="sRGB"
-    renderer="alpha: true, antialias: false, precision: mediump, colorManagement: false, logarithmicDepthBuffer: false"
+    renderer="antialias: false; alpha: true; colorManagement: false; precision: mediump"
     vr-mode-ui="enabled: false"
     device-orientation-permission-ui="enabled: false"
 >
-    <a-assets timeout="120000"></a-assets>
+    <a-assets timeout="60000"></a-assets>
 
-    <a-camera position="0 0 0" look-controls="enabled: false" raycaster="far: 10000; objects: .clickable"></a-camera>
-    <a-entity cursor="fuse: false; rayOrigin: mouse" raycaster="far: 10000; objects: .clickable"></a-entity>
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
     <a-entity mindar-image-target="targetIndex: 0">
-        <a-light type="ambient" color="#FFFFFF" intensity="2"></a-light>
-        <a-light type="directional" color="#FFFFFF" intensity="0.8" position="0 1 1"></a-light>
+        <a-light type="ambient" color="#ffffff" intensity="2"></a-light>
+        <a-light type="directional" color="#ffffff" intensity="1" position="0 2 2"></a-light>
 
-        <a-entity id="elephant-mascot" class="clickable" position="0 0.05 0">
-            <a-gltf-model
-                id="elephant-model"
-                position="0 0.25 0"
-                rotation="0 0 0"
-                scale="0.14 0.14 0.14"
-                visible="false"
-            ></a-gltf-model>
-            <a-entity id="elephant-fallback" visible="true">
-                <a-sphere radius="0.22" color="#DC2626" position="0 0.28 0"></a-sphere>
-                <a-sphere radius="0.16" color="#EF4444" position="0.16 0.48 0"></a-sphere>
-                <a-cylinder radius="0.05" height="0.28" color="#B91C1C" position="0.3 0.38 0" rotation="0 0 -25"></a-cylinder>
-                <a-circle radius="0.12" color="#FECACA" position="-0.08 0.52 -0.05" rotation="0 30 0"></a-circle>
-                <a-circle radius="0.12" color="#FECACA" position="-0.08 0.52 0.05" rotation="0 -30 0"></a-circle>
+        <a-entity id="elephant-mascot" position="0 0 0">
+            <a-entity id="elephant-fallback">
+                <a-sphere color="#DC2626" radius="0.22" position="0 0.3 0"></a-sphere>
+                <a-sphere color="#EF4444" radius="0.15" position="0.16 0.5 0"></a-sphere>
+                <a-cylinder color="#B91C1C" radius="0.05" height="0.26" position="0.3 0.4 0" rotation="0 0 -25"></a-cylinder>
+                <a-circle color="#FECACA" radius="0.1" position="-0.08 0.54 0.01" rotation="0 0 0"></a-circle>
             </a-entity>
-            <a-ring radius-inner="0.35" radius-outer="0.42" color="#FBBF24" position="0 0.02 0" rotation="-90 0 0" opacity="0.95"></a-ring>
+            <a-gltf-model id="elephant-model" visible="false" position="0 0.28 0" scale="0.14 0.14 0.14"></a-gltf-model>
+            <a-ring color="#FBBF24" radius-inner="0.35" radius-outer="0.42" position="0 0.01 0" rotation="-90 0 0"></a-ring>
         </a-entity>
 
-        <a-entity class="lucky-item clickable" position="-0.38 0.48 0.03" scale="0.1 0.1 0.1">
-            <a-sphere radius="0.35" color="#DC2626"></a-sphere>
-        </a-entity>
-        <a-entity class="lucky-item clickable" position="0.38 0.42 0.03" scale="0.09 0.09 0.09">
-            <a-sphere radius="0.35" color="#FBBF24"></a-sphere>
-        </a-entity>
-        <a-entity class="lucky-item clickable" position="0 0.62 0.03" scale="0.09 0.09 0.09">
-            <a-sphere radius="0.35" color="#DC2626"></a-sphere>
-        </a-entity>
+        <a-sphere id="lucky-item-1" class="lucky-item" color="#DC2626" radius="0.06" position="-0.38 0.12 0.05"></a-sphere>
+        <a-sphere id="lucky-item-2" class="lucky-item" color="#FBBF24" radius="0.05" position="0.38 0.1 0.05"></a-sphere>
+        <a-sphere id="lucky-item-3" class="lucky-item" color="#DC2626" radius="0.05" position="0 0.18 0.05"></a-sphere>
     </a-entity>
 </a-scene>
 </template>

@@ -88,30 +88,10 @@ body {
     left: 0 !important;
     width: 100% !important;
     height: 100% !important;
-    z-index: 1;
+    z-index: 1 !important;
 }
 
-#ar-container {
-    position: fixed;
-    inset: 0;
-    z-index: 1;
-}
-
-body.game-page {
-    overflow: hidden;
-    height: 100dvh;
-    height: 100vh;
-    margin: 0;
-    padding: 0;
-}
-
-body.game-page .game-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 50;
-}
+#ar-container { display: none; }
 
 body.game-page a-scene video,
 body.game-page video {
