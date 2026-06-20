@@ -1,8 +1,8 @@
 {
-    "modelUrl": "/assets/models/red_elephant_mascot_3d.glb",
+    "modelUrl": "/assets/models/red_elephant_meshy.glb",
     "preferGltf": true,
     "autoFit": true,
-    "autoFitHeight": 0.35,
+    "autoFitHeight": 0.4,
     "gltfScale": 0.22,
     "gltfPosX": 0,
     "gltfPosY": 0.15,
@@ -17,5 +17,5 @@
     "emojiScale": 2.5,
     "emojiPosY": 0.38,
     "fallbackScale": 1,
-    "updatedAt": null
+    "updatedAt": "2026-06-20T16:00:00+00:00"
 }

@@ -10,7 +10,7 @@ $t = loadTranslations($lang);
 initGameSession();
 
 $mindTarget = 'https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.mind';
-$elephantModel = fullAssetUrl('/assets/models/model.php?v=5');
+$elephantModel = fullAssetUrl('/assets/models/model.php?v=6');
 $itemsRequired = ITEMS_REQUIRED;
 $collected = getCollectedCount();
 $needsHttps = !isSecureGameHost();
@@ -102,7 +102,7 @@ renderGameHead($t['game_title'], $t);
     vr-mode-ui="enabled: false"
     device-orientation-permission-ui="enabled: false"
 >
-    <a-assets timeout="60000"></a-assets>
+    <a-assets timeout="180000"></a-assets>
 
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 

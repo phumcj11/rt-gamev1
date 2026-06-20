@@ -9,7 +9,7 @@ function modelSettingsFilePath(): string
 function defaultModelSettings(): array
 {
     return [
-        'modelUrl'      => '/assets/models/red_elephant_mascot_3d.glb',
+        'modelUrl'      => '/assets/models/red_elephant_meshy.glb',
         'preferGltf'    => true,
         'autoFit'       => true,
         'autoFitHeight' => 0.35,

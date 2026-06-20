@@ -224,7 +224,7 @@
         if (s.preferGltf === false) return;
 
         try {
-            let url = resolveAssetUrl(s.modelUrl || config.elephantModel || '/assets/models/red_elephant_mascot_3d.glb');
+            let url = resolveAssetUrl(s.modelUrl || config.elephantModel || '/assets/models/red_elephant_meshy.glb');
             const res = await fetch(url, { cache: 'no-cache' });
             if (!res.ok) throw new Error('HTTP ' + res.status);
             const buf = await res.arrayBuffer();

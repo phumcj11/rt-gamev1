@@ -123,7 +123,7 @@ if (!str_starts_with($modelUrl, 'http')) {
         <div class="order-1 lg:order-2">
             <div id="preview-wrap">
                 <a-scene id="preview-scene" embedded renderer="antialias: true; alpha: false" vr-mode-ui="enabled: false">
-                    <a-assets timeout="120000">
+                    <a-assets timeout="180000">
                         <a-asset-item id="preview-glb" src="<?= e($modelUrl) ?>" response-type="arraybuffer"></a-asset-item>
                     </a-assets>
 
